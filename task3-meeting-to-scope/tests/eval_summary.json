@@ -1,0 +1,7 @@
+{
+  "existing_result_count": 35,
+  "successful_api_calls": 7,
+  "rate_limited_calls": 28,
+  "other_failures": 0,
+  "note": "Rate-limited calls are inconclusive, not confirmed application-quality failures."
+}

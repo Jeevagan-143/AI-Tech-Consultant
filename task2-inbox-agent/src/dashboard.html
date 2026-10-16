@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Inbox Agent</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1e293b;
+    }
+
+    header {
+      background: #14213d;
+      color: white;
+      padding: 22px 30px;
+    }
+
+    header h1 { margin: 0 0 6px; font-size: 25px; }
+    header p { margin: 0; color: #cbd5e1; }
+
+    .container {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 20px;
+      padding: 22px;
+      max-width: 1500px;
+      margin: auto;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 3px 14px #0f172a0c;
+      min-width: 0;
+    }
+
+    h2 { margin-top: 0; font-size: 19px; }
+
+    #emailList {
+      max-height: 72vh;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+
+    .email-item {
+      width: 100%;
+      display: block;
+      text-align: left;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+      padding: 13px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      color: #1e293b;
+    }
+
+    .email-item:hover, .email-item.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .email-item strong { display: block; margin-bottom: 6px; }
+    .email-item small { color: #64748b; overflow-wrap: anywhere; }
+    .email-item p { margin-bottom: 0; }
+
+    .field-label {
+      display: block;
+      font-weight: bold;
+      margin: 16px 0 7px;
+    }
+
+    .value-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 12px;
+      border-radius: 7px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      min-height: 45px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      resize: vertical;
+      padding: 13px;
+      font: inherit;
+      line-height: 1.6;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      color: #1e293b;
+    }
+
+    textarea:focus {
+      outline: 2px solid #93c5fd;
+      border-color: #2563eb;
+    }
+
+    button.action {
+      border: 0;
+      padding: 11px 15px;
+      margin: 12px 7px 0 0;
+      border-radius: 7px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .primary { background: #2563eb; color: white; }
+    .approve { background: #15803d; color: white; }
+    .edit { background: #d97706; color: white; }
+    .reject { background: #dc2626; color: white; }
+    .secondary { background: #e2e8f0; color: #1e293b; }
+
+    #status {
+      padding: 12px;
+      margin: 14px 0;
+      border-radius: 7px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #status.error {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    #sources a {
+      display: block;
+      margin: 8px 0;
+      color: #2563eb;
+      overflow-wrap: anywhere;
+    }
+
+    .muted { color: #64748b; }
+
+    .note {
+      margin-top: 18px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 7px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 800px) {
+      .container { grid-template-columns: 1fr; padding: 12px; }
+      #emailList { max-height: 320px; }
+      header { padding: 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>AI Inbox Agent</h1>
+    <p>Review AI-generated support replies before sending them.</p>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Inbox <span id="emailCount">(loading...)</span></h2>
+
+      <button class="action secondary" id="refreshButton" type="button">
+        Refresh Emails
+      </button>
+
+      <div id="listStatus" class="muted">Loading emails...</div>
+      <div id="emailList"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Email Review</h2>
+
+      <div id="emptyState" class="muted">
+        Select an email from the inbox to begin.
+      </div>
+
+      <div id="emailDetails" hidden>
+        <span class="field-label">Subject</span>
+        <div id="emailSubject" class="value-box"></div>
+
+        <span class="field-label">From</span>
+        <div id="emailFrom" class="value-box"></div>
+
+        <span class="field-label">Category</span>
+        <div id="emailCategory" class="value-box"></div>
+
+        <span class="field-label">Customer Message</span>
+        <div id="emailBody" class="value-box"></div>
+
+        <button class="action primary" id="generateButton" type="button">
+          Generate AI Draft
+        </button>
+
+        <div id="status" role="status" aria-live="polite">
+          Select an email and generate a draft.
+        </div>
+
+        <span class="field-label">AI Reply Draft</span>
+        <textarea
+          id="draftText"
+          placeholder="Click Generate AI Draft to create a reply..."
+          aria-label="AI reply draft"
+        ></textarea>
+
+        <span class="field-label">Knowledge Sources</span>
+        <div id="sources" class="muted">
+          Sources will appear after draft generation.
+        </div>
+
+        <div>
+          <button class="action approve" id="approveButton" type="button">
+            Approve
+          </button>
+
+          <button class="action edit" id="saveEditButton" type="button">
+            Save Edited Reply
+          </button>
+
+          <button class="action reject" id="rejectButton" type="button">
+            Reject
+          </button>
+        </div>
+
+        <p class="note">
+          Approval records the review decision only. It does not automatically
+          send an email to the customer.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://localhost:3000";
+
+    let emails = [];
+    let selectedEmailId = null;
+    let draftGenerated = false;
+    let busy = false;
+
+    const emailList = document.getElementById("emailList");
+    const listStatus = document.getElementById("listStatus");
+    const emailCount = document.getElementById("emailCount");
+    const emptyState = document.getElementById("emptyState");
+    const emailDetails = document.getElementById("emailDetails");
+    const statusBox = document.getElementById("status");
+    const draftText = document.getElementById("draftText");
+    const sourcesBox = document.getElementById("sources");
+
+    const generateButton = document.getElementById("generateButton");
+    const approveButton = document.getElementById("approveButton");
+    const saveEditButton = document.getElementById("saveEditButton");
+    const rejectButton = document.getElementById("rejectButton");
+    const refreshButton = document.getElementById("refreshButton");
+
+    function getEmailId(email) {
+      return email.id ?? email.emailId ?? email._id;
+    }
+
+    function getEmailSubject(email) {
+      return email.subject ?? email.title ?? "(No subject)";
+    }
+
+    function getEmailFrom(email) {
+      return email.from ?? email.sender ?? email.email ?? "Unknown sender";
+    }
+
+    function getEmailBody(email) {
+      return email.body ?? email.message ?? email.text ?? email.content ?? "";
+    }
+
+    function setStatus(message, isError = false) {
+      statusBox.textContent = message;
+      statusBox.classList.toggle("error", isError);
+    }
+
+    async function apiRequest(path, options = {}) {
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          ...(options.body ? { "Content-Type": "application/json" } : {}),
+          ...(options.headers || {})
+        }
+      });
+
+      const responseText = await response.text();
+      let data = {};
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        data = { message: responseText };
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || `Request failed (${response.status})`
+        );
+      }
+
+      return data;
+    }
+
+    function setBusy(value) {
+      busy = value;
+
+      generateButton.disabled = value || selectedEmailId === null;
+      approveButton.disabled = value || selectedEmailId === null;
+      saveEditButton.disabled = value || selectedEmailId === null;
+      rejectButton.disabled = value || selectedEmailId === null;
+      refreshButton.disabled = value;
+
+      document.querySelectorAll(".email-item").forEach(button => {
+        button.disabled = value;
+      });
+    }
+
+    function renderEmails() {
+      emailList.replaceChildren();
+      emailCount.textContent = `(${emails.length})`;
+
+      if (!emails.length) {
+        listStatus.textContent = "No emails found.";
+        return;
+      }
+
+      listStatus.textContent = "Select an email to review.";
+
+      emails.forEach(email => {
+        const id = getEmailId(email);
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "email-item";
+        button.dataset.emailId = String(id);
+        button.classList.toggle(
+          "selected",
+          String(id) === String(selectedEmailId)
+        );
+
+        const subject = document.createElement("strong");
+        subject.textContent = getEmailSubject(email);
+
+        const sender = document.createElement("small");
+        sender.textContent = getEmailFrom(email);
+
+        const preview = document.createElement("p");
+        preview.className = "muted";
+        preview.textContent = getEmailBody(email).slice(0, 100);
+
+        button.append(subject, sender, preview);
+        button.addEventListener("click", () => selectEmail(id));
+        emailList.appendChild(button);
+      });
+    }
+
+    function selectEmail(id) {
+      if (busy) return;
+
+      const email = emails.find(
+        item => String(getEmailId(item)) === String(id)
+      );
+
+      if (!email) {
+        setStatus("Could not find the selected email.", true);
+        return;
+      }
+
+      selectedEmailId = id;
+      draftGenerated = false;
+
+      emptyState.hidden = true;
+      emailDetails.hidden = false;
+
+      document.getElementById("emailSubject").textContent =
+        getEmailSubject(email);
+
+      document.getElementById("emailFrom").textContent =
+        getEmailFrom(email);
+
+      document.getElementById("emailCategory").textContent =
+        email.category ?? email.type ?? "Uncategorized";
+
+      document.getElementById("emailBody").textContent =
+        getEmailBody(email);
+
+      draftText.value = "";
+      sourcesBox.replaceChildren();
+
+      const sourceMessage = document.createElement("p");
+      sourceMessage.textContent = "Generate a draft to view its sources.";
+      sourcesBox.appendChild(sourceMessage);
+
+      setStatus("Email selected. Click Generate AI Draft.");
+      renderEmails();
+      setBusy(false);
+    }
+
+    function extractDraft(data) {
+      if (typeof data === "string") return data;
+
+      return (
+        data.draft ??
+        data.finalReply ??
+        data.reply ??
+        data.answer ??
+        data.response ??
+        data.content ??
+        ""
+      );
+    }
+
+    function renderSources(data) {
+      sourcesBox.replaceChildren();
+
+      const sources = data.sources ?? data.citations ?? [];
+
+      if (!Array.isArray(sources) || sources.length === 0) {
+        sourcesBox.textContent = "No sources returned by the API.";
+        return;
+      }
+
+      sources.forEach(source => {
+        const url = typeof source === "string"
+          ? source
+          : source.url ?? source.link ?? source.source;
+
+        const title = typeof source === "string"
+          ? source
+          : source.title ?? source.name ?? url ?? "Source";
+
+        if (url && /^https?:\/\//i.test(url)) {
+          const link = document.createElement("a");
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = title;
+          sourcesBox.appendChild(link);
+        } else {
+          const item = document.createElement("p");
+          item.textContent = title;
+          sourcesBox.appendChild(item);
+        }
+      });
+    }
+
+    async function generateDraft() {
+      if (selectedEmailId === null || busy) return;
+
+      setBusy(true);
+      setStatus("Generating AI draft. Please wait...");
+
+      try {
+        const data = await apiRequest(
+          `/emails/${encodeURIComponent(selectedEmailId)}/draft`,
+          { method: "POST" }
+        );
+
+        const draft = extractDraft(data);
+
+        if (typeof draft !== "string" || !draft.trim()) {
+          throw new Error(
+            "The API returned no draft text. Check the draft endpoint response."
+          );
+        }
+
+        draftText.value = draft;
+        draftGenerated = true;
+        renderSources(data);
+
+        setStatus(
+          data.message ||
+          "Draft generated. Review the reply and sources before approval."
+        );
+
+        // Bring the generated reply into view.
+        draftText.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (error) {
+        setStatus(`Draft generation failed: ${error.message}`, true);
+        window.alert(`Draft generation failed:\n${error.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function submitReview(status) {
+      if (selectedEmailId === null || busy) return;
+
+      const reply = draftText.value.trim();
+
+      if (status === "approved" && !draftGenerated) {
+        setStatus("Generate the AI draft first before approving it.", true);
+        window.alert("Please generate the AI draft before approving it.");
+        return;
+      }
+
+      if (status !== "rejected" && !reply) {
+        setStatus("Generate or enter a reply before submitting.", true);
+        window.alert("Please enter a reply before submitting.");
+        return;
+      }
+
+      if (
+        status === "rejected" &&
+        !window.confirm("Are you sure you want to reject this draft?")
+      ) {
+        return;
+      }
+
+      let confirmationMessage = "";
+
+      if (status === "approved") {
+        confirmationMessage =
+          "Reply approved. This records approval; it does not send an email.";
+      } else if (status === "edited") {
+        confirmationMessage =
+          "Edited reply saved successfully. The email has not been sent.";
+      } else {
+        confirmationMessage =
+          "Draft rejected successfully. The email has not been sent.";
+      }
+
+      setBusy(true);
+      setStatus("Saving review decision...");
+
+      try {
+        const payload = {
+          status,
+          reply,
+          editedReply: reply,
+          feedback: status === "approved"
+            ? "Approved by human reviewer"
+            : status === "edited"
+              ? "Edited by human reviewer"
+              : "Rejected by human reviewer"
+        };
+
+        const result = await apiRequest(
+          `/emails/${encodeURIComponent(selectedEmailId)}/review`,
+          {
+            method: "POST",
+            body: JSON.stringify(payload)
+          }
+        );
+
+        const message = result.message || confirmationMessage;
+
+        setStatus(message);
+
+        // Show a visible confirmation popup only after the API succeeds.
+        window.alert(message);
+
+        if (status === "rejected") {
+          draftGenerated = false;
+        }
+      } catch (error) {
+        setStatus(`Could not save review: ${error.message}`, true);
+        window.alert(`Could not save review:\n${error.message}`);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function loadEmails() {
+      if (busy) return;
+
+      setBusy(true);
+      listStatus.textContent = "Loading emails...";
+
+      try {
+        const data = await apiRequest("/emails");
+
+        emails = Array.isArray(data)
+          ? data
+          : data.emails ?? data.items ?? [];
+
+        renderEmails();
+
+        if (emails.length) {
+          const selectedStillExists = emails.some(
+            item => String(getEmailId(item)) === String(selectedEmailId)
+          );
+
+          if (!selectedStillExists) {
+            selectedEmailId = null;
+            selectEmail(getEmailId(emails[0]));
+          }
+        } else {
+          selectedEmailId = null;
+          draftGenerated = false;
+          emailDetails.hidden = true;
+          emptyState.hidden = false;
+          listStatus.textContent = "The API returned no emails.";
+        }
+      } catch (error) {
+        listStatus.textContent = `Could not load emails: ${error.message}`;
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    generateButton.addEventListener("click", generateDraft);
+
+    approveButton.addEventListener("click", () => {
+      submitReview("approved");
+    });
+
+    saveEditButton.addEventListener("click", () => {
+      submitReview("edited");
+    });
+
+    rejectButton.addEventListener("click", () => {
+      submitReview("rejected");
+    });
+
+    refreshButton.addEventListener("click", loadEmails);
+
+    loadEmails();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Client needs a modern mobile-friendly website for a fitness studio. Visitors should view classes, trainer profiles, membership plans and contact details. Add a contact form. Online payments are excluded from phase one. The manager should be able to update class descriptions. The client has a logo and brand colors. Hosting, platform and editing permissions need confirmation.

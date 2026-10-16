@@ -1,0 +1,150 @@
+[
+  {
+    "id": "T3-01",
+    "transcript": "Client needs a mobile-friendly fitness studio website with class listings, trainer profiles and contact details. Online payments are excluded from phase one.",
+    "expected_features": [
+      "class listings",
+      "trainer profiles"
+    ],
+    "expected_exclusions": [
+      "online payments"
+    ]
+  },
+  {
+    "id": "T3-02",
+    "transcript": "Client wants a local service directory with plumber and electrician profiles, category search and location search. Hosting is undecided.",
+    "expected_features": [
+      "provider profiles",
+      "category search",
+      "location search"
+    ],
+    "expected_open_questions": [
+      "hosting"
+    ]
+  },
+  {
+    "id": "T3-03",
+    "transcript": "Client wants an existing business website redesigned for mobile devices. They also want appointment booking, but the booking provider and current platform are unknown.",
+    "expected_features": [
+      "website redesign",
+      "appointment booking"
+    ],
+    "expected_open_questions": [
+      "booking provider",
+      "platform"
+    ]
+  },
+  {
+    "id": "T3-04",
+    "transcript": "Client requests a restaurant website with a menu page, opening hours, location details and a contact form. They have not provided branding.",
+    "expected_features": [
+      "menu page",
+      "opening hours",
+      "contact form"
+    ],
+    "expected_open_questions": [
+      "branding"
+    ]
+  },
+  {
+    "id": "T3-05",
+    "transcript": "Client requests an online course website with course pages and student registration. Payment integration is not confirmed.",
+    "expected_features": [
+      "course pages",
+      "student registration"
+    ],
+    "expected_open_questions": [
+      "payment"
+    ]
+  },
+  {
+    "id": "T3-06",
+    "transcript": "Client project: Restaurant Website. A restaurant needs a menu, opening hours, location map and contact form. Branding is undecided.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-07",
+    "transcript": "Client project: Online Course Platform. A training provider needs course pages, student registration and progress tracking. Payment requirements are undecided.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-08",
+    "transcript": "Client project: Portfolio Website. A photographer needs a responsive portfolio, gallery, biography and enquiry form.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-09",
+    "transcript": "Client project: Booking Website. A salon needs service listings and appointment booking. The booking provider is not selected.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-10",
+    "transcript": "Client project: Ecommerce Website. A shop wants product pages, search, cart and checkout. Payment gateway and shipping rules are undecided.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-11",
+    "transcript": "Client project: School Website. A school needs admissions information, staff profiles, events and a contact form.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-12",
+    "transcript": "Client project: Medical Clinic Website. A clinic wants doctor profiles, opening hours and appointment requests. Privacy requirements need clarification.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-13",
+    "transcript": "Client project: Real Estate Directory. A property agency needs property listings, location filters and enquiry forms. Listing data is not ready.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-14",
+    "transcript": "Client project: Nonprofit Website. A nonprofit needs its mission, projects, volunteer registration and donation functionality. Donation provider is undecided.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-15",
+    "transcript": "Client project: Travel Website. A travel agency needs destination pages, tour packages and enquiry forms. Booking and payment integrations are undecided.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-16",
+    "transcript": "Client project: Redesign Project. A client wants a mobile-friendly redesign of an existing website. Platform, migration and launch date are unknown.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-17",
+    "transcript": "Client project: Membership Website. A community wants member profiles, login and restricted content. Subscription and payment requirements are not confirmed.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-18",
+    "transcript": "Client project: Event Website. An event organizer needs event pages, schedules, speaker profiles and registration. Ticket payment is undecided.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-19",
+    "transcript": "Client project: Service Marketplace. A client wants customer and provider accounts, searchable services and reviews. Moderation and payment rules need confirmation.",
+    "expected_features": [],
+    "expected_open_questions": []
+  },
+  {
+    "id": "T3-20",
+    "transcript": "Client project: Incomplete Brief. Client says they want a website but has not decided the purpose, audience, features, budget or deadline.",
+    "expected_features": [],
+    "expected_open_questions": []
+  }
+]
