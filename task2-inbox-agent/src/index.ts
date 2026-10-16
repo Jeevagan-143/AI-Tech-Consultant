@@ -1,12 +1,12 @@
-
 import express from "express";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(express.static("src"));
+app.use(express.static(path.resolve(process.cwd(), "src")));
 
 const PORT = Number(process.env.PORT || 3000);
 const KNOWLEDGE_API_URL =
@@ -21,18 +21,18 @@ type Email = {
   question: string;
 };
 
-type Review = {
-  status: "approved" | "edited" | "rejected";
-  finalReply?: string;
-  feedback?: string;
-  reviewedAt: string;
-};
-
 type Source = {
   title?: string;
   url?: string;
   link?: string;
   source?: string;
+};
+
+type Review = {
+  status: "approved" | "edited" | "rejected";
+  finalReply?: string;
+  feedback?: string;
+  reviewedAt: string;
 };
 
 type KnowledgeResponse = {
@@ -192,7 +192,6 @@ const topics = [
   }
 ];
 
-// Generate 50 varied sample emails for the inbox demo.
 const emails: Email[] = Array.from({ length: 50 }, (_, index) => {
   const topic = topics[Math.floor(index / 10)];
   const variation = index % 10;
@@ -213,16 +212,13 @@ const draftNeedsHuman = new Map<number, boolean>();
 const reviews = new Map<number, Review>();
 const consecutiveUnedited = new Map<string, number>();
 
+// Serve the dashboard at both the root URL and /dashboard.html.
 app.get("/", (_req, res) => {
-  res.json({
-    message: "AI Tech Consultant - Inbox Agent",
-    endpoints: [
-      "/health",
-      "/emails",
-      "/emails/:id/draft",
-      "/emails/:id/review"
-    ]
-  });
+  res.sendFile(path.resolve(process.cwd(), "src", "dashboard.html"));
+});
+
+app.get("/dashboard.html", (_req, res) => {
+  res.sendFile(path.resolve(process.cwd(), "src", "dashboard.html"));
 });
 
 app.get("/health", (_req, res) => {
@@ -267,29 +263,19 @@ app.post("/emails/:id/draft", async (req, res) => {
       });
     }
 
-    const knowledge =
-      (await response.json()) as KnowledgeResponse;
-
-    const answer = (
-      knowledge.answer ||
-      knowledge.response ||
-      ""
-    ).trim();
+    const knowledge = (await response.json()) as KnowledgeResponse;
+    const answer = (knowledge.answer || knowledge.response || "").trim();
 
     const sources = (
       knowledge.sources ||
       knowledge.citations ||
       []
-    ).filter(source =>
-      Boolean(source.url || source.link || source.source)
-    );
+    ).filter(source => Boolean(source.url || source.link || source.source));
 
     const needsHuman = Boolean(
       knowledge.needs_human ?? knowledge.needsHuman
     );
 
-    // Never invent a technical answer when the Knowledge Brain
-    // does not return one. Keep the draft safe and request review.
     let reply: string;
 
     if (answer) {
@@ -301,19 +287,16 @@ app.post("/emails/:id/draft", async (req, res) => {
       if (sources.length > 0) {
         reply +=
           "Helpful resources:\n" +
-          sources
-            .map(source => {
-              const url = source.url || source.link || source.source;
-              return `- ${source.title || "Support documentation"}: ${url}`;
-            })
-            .join("\n") +
+          sources.map(source => {
+            const url = source.url || source.link || source.source;
+            return `- ${source.title || "Support documentation"}: ${url}`;
+          }).join("\n") +
           "\n\n";
       }
 
       if (needsHuman) {
         reply +=
-          "This response requires review by our support team before " +
-          "a definitive answer can be provided.\n\n";
+          "Our support team must review this response before a definitive answer can be provided.\n\n";
       }
 
       reply +=
@@ -323,13 +306,9 @@ app.post("/emails/:id/draft", async (req, res) => {
       reply =
         `Hello,\n\n` +
         `Thank you for contacting support about "${email.subject}".\n\n` +
-        `We could not verify a suitable answer from the available support ` +
-        `documentation. Our support team needs to review your question ` +
-        `before providing accurate guidance.\n\n` +
+        `We could not verify a suitable answer from the available support documentation. ` +
+        `Our support team needs to review your question before providing accurate guidance.\n\n` +
         `Regards,\nSupport Team`;
-
-      // Without a grounded answer, always require human review.
-      draftNeedsHuman.set(id, true);
     }
 
     const finalNeedsHuman = needsHuman || !answer;
@@ -352,10 +331,8 @@ app.post("/emails/:id/draft", async (req, res) => {
     });
   } catch (error) {
     console.error("Draft generation failed:", error);
-
     return res.status(502).json({
-      error:
-        "Cannot connect to Knowledge Brain. Check that Task 1 is running."
+      error: "Cannot connect to Knowledge Brain. Check KNOWLEDGE_API_URL."
     });
   }
 });
@@ -392,7 +369,6 @@ app.post("/emails/:id/review", (req, res) => {
     });
   }
 
-  // Accept both field names so the dashboard and API stay compatible.
   const submittedReply = (editedReply ?? reply ?? "").trim();
 
   if (status === "edited" && !submittedReply) {
@@ -401,16 +377,8 @@ app.post("/emails/:id/review", (req, res) => {
     });
   }
 
-  if (status === "approved" && !drafts.get(id)?.trim()) {
-    return res.status(400).json({
-      error: "There is no draft to approve"
-    });
-  }
-
   const finalReply =
-    status === "edited"
-      ? submittedReply
-      : drafts.get(id);
+    status === "edited" ? submittedReply : drafts.get(id);
 
   const review: Review = {
     status: status as Review["status"],
@@ -422,15 +390,12 @@ app.post("/emails/:id/review", (req, res) => {
   reviews.set(id, review);
 
   const category = email.category;
-
-  if (status === "approved") {
-    consecutiveUnedited.set(
-      category,
-      (consecutiveUnedited.get(category) || 0) + 1
-    );
-  } else {
-    consecutiveUnedited.set(category, 0);
-  }
+  consecutiveUnedited.set(
+    category,
+    status === "approved"
+      ? (consecutiveUnedited.get(category) || 0) + 1
+      : 0
+  );
 
   const consecutive = consecutiveUnedited.get(category) || 0;
 
@@ -450,6 +415,6 @@ app.post("/emails/:id/review", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Inbox Agent running at http://localhost:${PORT}`);
+  console.log(`Inbox Agent running on port ${PORT}`);
   console.log(`Knowledge Brain API: ${KNOWLEDGE_API_URL}`);
 });
